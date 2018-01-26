@@ -43,6 +43,9 @@ We will evaluate the system on our own test sets, by querying your system for ea
 ## Guidelines
 * ***Fork this _git repo_*** and add relevant files and explanations for what you feel necessary (starting with a clear description of what is implemented in the READme)
 * Make sure you ***document everything*** and assume nothing.
+* You can program in your prefered language, but we suggest you code in python, since it is our primary language at unbabel
+* Don't forget to keep your code clean and well documented
 * ***Send us a link to your fork*** as soon as you start working on it, and then let us know when you're done.
 * If you can't finish the challenge due to unforeseen personal reasons let us know ASAP so we can adapt your deadline and/or challenge.
 * Any challenge related questions, technical or otherwise, feel free to contact us: `ai-challenge@unbabel.com`.
+
