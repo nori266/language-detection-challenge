@@ -41,7 +41,7 @@ To simplify we are going to focus on English and Spanish, so you only need to re
 We will evaluate the system on our own test sets, by querying your system for each test case. We will use different datasets for each task.
 
 ## Guidelines
-* ***Fork this _git repo_*** and add relevant files and explanations for what you feel necessary (starting with a clear description of what is implemented in the READme)
+* ***Fork this _git repo_*** and add relevant files and explanations for what you feel necessary (starting with a clear description of what is implemented in the README)
 * You can program in your prefered language, but we suggest you code in **Python**, since it is our primary language at unbabel
 * Make sure you ***document everything*** and assume nothing.
 * Don't forget to keep your code clean and commit regularly.
