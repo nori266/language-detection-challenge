@@ -1,4 +1,42 @@
-## Data
+## Evaluation
+
+Inside this folder you can find testsets for tasks 1 and 2, respectively:
+
+- langid.test
+- langid-variants.test
+
+You need to generate a file with the corresponding labels for these tasks. This is, if your 
+test file has the following senteces in taks 1:
+
+```
+This is an English sentence
+Esta es una frase en español
+Isto é uma frase em português
+```
+
+You should generate a file with your hypothesis:
+```
+en
+es
+pt
+```
+
+In the same way, for task2, given the input:
+
+```
+Tem gente no Barcelona que vê Philippe Coutinho como um possível substituto de Neymar. 
+Belga estará perto de renovar, mas, enquanto tal não sucede, o Chelsea teme que este mude de ideias e rume ao Real Madrid.
+```
+
+Your output file should contain the hypothesis:
+```
+pt-br
+pt-pt
+```
+
+
+
+## Training data
 
 Access all langid data inside https://drive.google.com/drive/folders/1a4Gzu5-vsMAjMUnObG5lm5Ym591Z88JL?usp=sharing
 
