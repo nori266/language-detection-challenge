@@ -18,7 +18,7 @@ def load_data(path_to_train: str) -> pd.DataFrame:
     return train_data
 
 
-def prepare_train_data(df: pd.DataFrame) -> List[Tuple[Iterable, Iterable]]:
+def prepare_data(df: pd.DataFrame) -> List[Tuple[Iterable, Iterable]]:
     """Returns data in proper format for training.
 
     :param df: DataFrame

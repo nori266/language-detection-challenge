@@ -1,22 +1,32 @@
+from typing import Any
+from typing import List
+from typing import Tuple
+
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 
 torch.manual_seed(1)
 
+__all__ = [
+    'BiLSTM_CRF',
+]
+
+
 class BiLSTM_CRF(nn.Module):
+    """
+
+    """
 
     START_TAG = "<START>"
     STOP_TAG = "<STOP>"
     TAG_TO_IX = {"en": 0, "es": 1, "other": 2, START_TAG: 3, STOP_TAG: 4}
 
-    def __init__(self, vocab_size, embedding_dim, hidden_dim):
+    def __init__(self, vocab_size: int, embedding_dim: int, hidden_dim: int):
         super(BiLSTM_CRF, self).__init__()
         self.embedding_dim = embedding_dim
         self.hidden_dim = hidden_dim
         self.vocab_size = vocab_size
-        self.tag_to_ix = self.TAG_TO_IX
-        self.tagset_size = len(self.tag_to_ix)
+        self.tagset_size = len(self.TAG_TO_IX)
 
         self.word_embeds = nn.Embedding(vocab_size, embedding_dim)
         self.lstm = nn.LSTM(embedding_dim, hidden_dim // 2,
@@ -31,15 +41,20 @@ class BiLSTM_CRF(nn.Module):
 
         self.hidden = self.init_hidden()
 
-    def init_hidden(self):
+    def init_hidden(self) -> Tuple[torch.Tensor, torch.Tensor]:
+
         return (torch.randn(2, 1, self.hidden_dim // 2),
                 torch.randn(2, 1, self.hidden_dim // 2))
 
     def _forward_alg(self, feats):
+        """
+
+        :param feats:
+        :return:
+        """
         # Do the forward algorithm to compute the partition function
         init_alphas = torch.full((1, self.tagset_size), -10000.)
-        # START_TAG has all of the score.
-        init_alphas[0][self.tag_to_ix[self.START_TAG]] = 0.
+        init_alphas[0][self.TAG_TO_IX[self.START_TAG]] = 0.
 
         # Wrap in a variable so that we will get automatic backprop
         forward_var = init_alphas
@@ -62,11 +77,16 @@ class BiLSTM_CRF(nn.Module):
                 # scores.
                 alphas_t.append(log_sum_exp(next_tag_var).view(1))
             forward_var = torch.cat(alphas_t).view(1, -1)
-        terminal_var = forward_var + self.transitions[self.tag_to_ix[self.STOP_TAG]]
+        terminal_var = forward_var + self.transitions[self.TAG_TO_IX[self.STOP_TAG]]
         alpha = log_sum_exp(terminal_var)
         return alpha
 
-    def _get_lstm_features(self, sentence):
+    def _get_lstm_features(self, sentence: torch.Tensor):
+        """Provides features from the LSTM embedding.
+
+        :param sentence:
+        :return:
+        """
         self.hidden = self.init_hidden()
         embeds = self.word_embeds(sentence).view(len(sentence), 1, -1)
         lstm_out, self.hidden = self.lstm(embeds, self.hidden)
@@ -75,21 +95,31 @@ class BiLSTM_CRF(nn.Module):
         return lstm_feats
 
     def _score_sentence(self, feats, tags):
-        # Gives the score of a provided tag sequence
+        """Gives the score of a provided tag sequence.
+
+        :param feats: features
+        :param tags:
+        :return:
+        """
         score = torch.zeros(1)
-        tags = torch.cat([torch.tensor([self.tag_to_ix[self.START_TAG]], dtype=torch.long), tags])
+        tags = torch.cat([torch.tensor([self.TAG_TO_IX[self.START_TAG]], dtype=torch.long), tags])
         for i, feat in enumerate(feats):
             score = score + \
                 self.transitions[tags[i + 1], tags[i]] + feat[tags[i + 1]]
-        score = score + self.transitions[self.tag_to_ix[self.STOP_TAG], tags[-1]]
+        score = score + self.transitions[self.TAG_TO_IX[self.STOP_TAG], tags[-1]]
         return score
 
     def _viterbi_decode(self, feats):
+        """
+
+        :param feats:
+        :return:
+        """
         backpointers = []
 
         # Initialize the viterbi variables in log space
         init_vvars = torch.full((1, self.tagset_size), -10000.)
-        init_vvars[0][self.tag_to_ix[self.START_TAG]] = 0
+        init_vvars[0][self.TAG_TO_IX[self.START_TAG]] = 0
 
         # forward_var at step i holds the viterbi variables for step i-1
         forward_var = init_vvars
@@ -113,7 +143,7 @@ class BiLSTM_CRF(nn.Module):
             backpointers.append(bptrs_t)
 
         # Transition to STOP_TAG
-        terminal_var = forward_var + self.transitions[self.tag_to_ix[self.STOP_TAG]]
+        terminal_var = forward_var + self.transitions[self.TAG_TO_IX[self.STOP_TAG]]
         best_tag_id = argmax(terminal_var)
         path_score = terminal_var[0][best_tag_id]
 
@@ -124,20 +154,32 @@ class BiLSTM_CRF(nn.Module):
             best_path.append(best_tag_id)
         # Pop off the start tag (we dont want to return that to the caller)
         start = best_path.pop()
-        assert start == self.tag_to_ix[self.START_TAG]
+        assert start == self.TAG_TO_IX[self.START_TAG]
         best_path.reverse()
         return path_score, best_path
 
     def save_model(self, pathname):
         torch.save(self.state_dict(), pathname)
 
-    def neg_log_likelihood(self, sentence, tags):
+    def neg_log_likelihood(self, sentence: torch.Tensor, tags):
+        """Overrides nn.Module's method. Calculates error.
+
+        :param sentence: input sentence
+        :param tags: gold tags
+        :return: error score
+        """
         feats = self._get_lstm_features(sentence)
         forward_score = self._forward_alg(feats)
         gold_score = self._score_sentence(feats, tags)
         return forward_score - gold_score
 
-    def forward(self, sentence):
+    def forward(self, sentence: torch.Tensor) -> Tuple[torch.Tensor, List[Any]]:
+        """Forward pass. Get the emission scores from the BiLSTM.
+        Then find the best path, given the features.
+
+        :param sentence: input sentence
+        :return:
+        """
         # Get the emission scores from the BiLSTM
         lstm_feats = self._get_lstm_features(sentence)
 
@@ -146,24 +188,30 @@ class BiLSTM_CRF(nn.Module):
         return score, tag_seq
 
     @classmethod
-    def load_model(cls, pathname):
-        model = torch.load(pathname)
+    def load_model(cls, pathname: str, model: 'BiLSTM_CRF') -> 'BiLSTM_CRF':
+        """Loads serialized model. Model must be initialized.
+
+        :param pathname:
+        :param model: initialized model
+        :return:
+        """
+        # TODO save the parameters into separate file to avoid the need of initializing
+        model.load_state_dict(torch.load(pathname))
         model.eval()
         return model
 
 
-def argmax(vec):
-    """Returns the argmax as a python int.
+def argmax(vec: torch.Tensor) -> int:
+    """Returns the argmax as int.
 
     :param vec:
     :return:
     """
-    #
     _, idx = torch.max(vec, 1)
     return idx.item()
 
-#
-def log_sum_exp(vec):
+
+def log_sum_exp(vec: torch.Tensor) -> torch.Tensor:
     """Computes log sum exp in a numerically stable way for the forward algorithm.
 
     :param vec:
