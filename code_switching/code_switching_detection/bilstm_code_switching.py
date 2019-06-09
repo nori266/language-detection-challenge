@@ -124,12 +124,10 @@ class BilstmCodeSwitching:
         flat_predictions = [tag for sequence in predictions for tag in sequence]
         flat_true_values = [tag for sequence in true_values for tag in sequence]
 
-        for lang in self.TAG_TO_IX.keys():
-            bool_predictions = [1 if tag == lang else 0 for tag in flat_predictions]
-            bool_true_values = [1 if tag == lang else 0 for tag in flat_true_values]
+        for lang in self.ix_to_tag.values():
 
-            print(f"Precision for {lang}: {precision(bool_true_values, bool_predictions, self.TAG_TO_IX[lang])}")
-            print(f"Recall for {lang}: {recall(bool_true_values, bool_predictions, self.TAG_TO_IX[lang])}")
+            print(f"Precision for {lang}: {precision(flat_true_values, flat_predictions, lang)}")
+            print(f"Recall for {lang}: {recall(flat_true_values, flat_predictions, lang)}\n")
 
     def save(self, pathname: str):
         """Saves model to file.
@@ -209,7 +207,7 @@ def prepare_sequence(seq, to_ix: Dict):
     return torch.tensor(idxs, dtype=torch.long)
 
 
-def precision(true_values: Iterable, predictions: Iterable, positive_class: int) -> float:
+def precision(true_values: Iterable, predictions: Iterable, positive_class: str) -> float:
     """Calculates precision metric for positive_class. Comparing to sklearn precision_score
     this function set values to False if they match neither positive nor negative class.
 
@@ -229,7 +227,7 @@ def precision(true_values: Iterable, predictions: Iterable, positive_class: int)
     return true_positive / positive
 
 
-def recall(true_values: Iterable, predictions: Iterable, positive_class: int) -> float:
+def recall(true_values: Iterable, predictions: Iterable, positive_class: str) -> float:
     """Calculates recall metric for positive_class. Comparing to sklearn precision_score
     this function set values to False if they match neither positive nor negative class.
 
@@ -241,6 +239,7 @@ def recall(true_values: Iterable, predictions: Iterable, positive_class: int) ->
 
     true_positive = len([pred for (pred, gold) in zip(predictions, true_values)
                          if (pred == gold and pred == positive_class)])
+
     all_true = len([value for value in true_values if value == positive_class])
 
     if all_true == 0:  # excludes division by zero
