@@ -1,30 +1,27 @@
-Dear candidate, 
+## Solution description
 
-Congratulations for having passed to the challenge stage in our hiring process!
+#### Installation
 
-This is a short 48-hour challenge to understand how you work, your thought process and metodology. 
-You do not need to be familiar with the described problem to be able to do this challenge. 
-In fact, first and foremost, we are going to focus on your reasoning and the steps you took.
+Before running the scripts and notebooks, install the requirements.txt.
 
-Don't forget to plan your time accordingly, and good luck! :-)
+#### Demo scripts
 
--- The Unbabel Team
+The demo scripts `task1.py`, `task2.py`, and `task3.py` solve the corresponding tasks.
+How to run:
 
+`python task1.py input_file output_file`
 
-## Description
+`python task2.py input_file output_file`
 
-At Unbabel, we deal with many types of multilingual content at all time. Thus, the first thing we 
-need to be able to do is to identify these languages properly.
+*input_file* should be a text file with one document for a line.
 
-We need you to build a service that provided with a text, identifies the language in which it is 
-written, and provides that answer.
-We provide you with the initial repo to implement this, and some requirements that the service 
-should satisfy. 
+*output_file* will contain labels, one label for a line.
 
-Whether you choose to implement an existing approach or compile one, make sure you document it
-and explain your reasoning.
+`python task3.py input_file.tsv output_file`
 
-### Tasks
+*input_file.tsv* should be a .tsv or .csv file in the same format as *train_data.tsv* and *dev_data.tsv* in `code_switching/data`.
+
+## Tasks
 
 1 - Implement a Language Identification service that returns the language code of the language in which the text is written. The provided data and test will
 target Spanish (ES), Portuguese (PT-PT) and English (EN)
@@ -48,4 +45,3 @@ We will evaluate the system on our own test sets, by querying your system for ea
 * ***Send us a link to your fork*** as soon as you start working on it, and then let us know when you're done. Be sure to set our role as `reporter` and not `guest`.
 * If you can't finish the challenge due to unforeseen personal reasons let us know ASAP so we can adapt your deadline and/or challenge.
 * Any challenge related questions, technical or otherwise, feel free to contact us: `ai-challenge@unbabel.com`.
-
