@@ -1,3 +1,25 @@
+## Solution description
+
+There is a tool langid.py which solves the task at a rather high level. The disadvantage is that there is a restricted set of languages. The documentation says that it is possible to train the model with custom data, but the interface of training is not very clear, and I faced technical problems that I could not solve.
+
+I used FastText for this task. I compared FastText with langid.py, and there was almost no difference in the evaluation results. But the interface of FastText is better. I took a pretrained model for Task 1 and trained a custom model for Task 2.
+
+To evaluate model quality I have calculated precision and recall for each class. The average precision for Task 1 is 0.95, recall is 0.88. For Task 2: precision is 0.9, recall is 0.88.
+
+I have never dealt with this task before, and it is hard to say what would be a better decision. I think it is worth experimenting with char-level embeddings (ELMo), because the differences between the variants of Portuguese are often in char level.
+
+
+## Project structure
+
+`language_identification` - source code of language identification using FastText model
+
+`models` folder contains:
+
+*  lid.176.ftz - pretrained model
+*  langid_variants.bin - trained on training data 
+
+---------------------------------
+
 ## Evaluation
 
 Inside this folder you can find testsets for tasks 1 and 2, respectively:

@@ -1,3 +1,24 @@
+## Solution description
+
+As a model for code switching task I have chosen BiLSTM model from Pytorch, and I used the proposed tutorial. I have implemented a wrapper for a model, that prepares data and has methods for more convenient work with model: fit, predict, evaluate, save, load. 
+
+When using BiLSTM, if we represent the input as an index in vocabulary, there is a problem of out-of-vocabulary words. In my solution, I have chosen the simplest method - to throw away the words we had not seen during training. In this situation, we won’t be able to make predictions for these words. As the solution I would suggest use embeddings as input to a BiLSTM model instead of a simple vocabulary index, to represent words in continuous space.
+
+What I wanted to improve, but did not have time:
+- use embeddings as input for BiLSTM
+- setup.py module
+- change the project structure, to put the source code away from data and models
+ 
+
+## Project structure
+
+`code_switching_detection` - source code containing BiLSTM implementation `bilstm_crf.py` and a wraper for it in `bilstm_code_switching.py`
+
+`data` - data for the task (I did not change it)
+
+`models` - folder to store trained models
+
+
 ## Data
 
 For code switching we will focus on Spanish and English, and the data provided is derived from http://www.care4lang.seas.gwu.edu/cs2/call.html. However, instead of downloading the data

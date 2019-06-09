@@ -1,4 +1,4 @@
-## Solution description
+## Project description
 
 #### Installation
 
@@ -32,6 +32,9 @@ python task3.py input_file.tsv output_file
 `demo_notebooks` folder contains notebooks corresponding to the tasks. They demonstrate how to use the models and how to evaluate their quality.
 
 
+In `code_switching` and `langid` I provided the description of my solutions.
+
+-----------------------------------------------------------------
 ## Tasks
 
 1 - Implement a Language Identification service that returns the language code of the language in which the text is written. The provided data and test will
