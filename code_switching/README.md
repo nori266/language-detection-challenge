@@ -13,7 +13,9 @@ What I wanted to improve, but did not have time:
 ## Project structure
 
 `code_switching_detection` - source code containing BiLSTM implementation `bilstm_crf.py` and a wraper for it in `bilstm_code_switching.py`
+
 `data` - data for the task (I did not change it)
+
 `models` - folder to store trained models
 
 
