@@ -1,5 +1,6 @@
 import csv
 import json
+import os
 from pathlib import Path
 from typing import Dict
 from typing import Iterable
@@ -134,6 +135,9 @@ class BilstmCodeSwitching:
 
         :param pathname: path to save model and vocabulary
         """
+        if not os.path.exists(pathname):
+            os.makedirs(pathname)
+
         torch.save(self.__model.state_dict(), Path(pathname) / 'code_switching_model')
 
         vocab_path = Path(pathname) / 'vocabulary.json'

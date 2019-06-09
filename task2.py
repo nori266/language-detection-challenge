@@ -16,7 +16,6 @@ if __name__ == '__main__':
     else:
         output_file = sys.argv[2]
 
-
     model = FasttextLangId('langid/models/langid_variants.bin')
     output = model.predict_file(test_file)
 
