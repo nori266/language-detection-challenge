@@ -14,29 +14,37 @@ from .bilstm_crf import BiLSTM_CRF
 
 __all__ = [
     'BilstmCodeSwitching',
+    'load_data',
+    'prepare_data',
 ]
 
 
 class BilstmCodeSwitching:
 
-    EMBEDDING_DIM = 5
+    EMBEDDING_DIM = 3
     HIDDEN_DIM = 4
 
-    OOV_VALUE = 'other'
+    OOV_VALUE = "other"
 
     START_TAG = "<START>"
     STOP_TAG = "<STOP>"
 
-    TAG_TO_IX = {"en": 0, "es": 1, "other": 2}
+    TAG_TO_IX = {"en": 0, "es": 1, "other": 2, START_TAG: 3, STOP_TAG: 4}
 
     def __init__(self):
         self.word_to_ix = {}
         self.vocab_size = 0
         self.__model = None
-        self.ix_to_tag = {y: x for x, y in self.TAG_TO_IX.items()}
+        self.ix_to_tag = {0: "en", 1: "es", 2: "other"}
 
-    def fit(self, training_data: pd.DataFrame, epochs=20):
+    def fit(self, filename: str, epochs=20) -> 'BilstmCodeSwitching':
+        """Trains model given training data as pandas DataFrame.
 
+        :param filename:
+        :param epochs:
+        :return: self
+        """
+        training_data = load_data(filename)
         training_data = prepare_data(training_data)
 
         self.word_to_ix = get_vocabulary(training_data)
@@ -49,18 +57,20 @@ class BilstmCodeSwitching:
             for sentence, tags in training_data:
                 self.__model.zero_grad()
 
-                # Step 2. Get our inputs ready for the network, that is,
+                # Step 1. Get our inputs ready for the network, that is,
                 # turn them into Tensors of word indices.
                 sentence_in = prepare_sequence(sentence, self.word_to_ix)
                 targets = torch.tensor([self.TAG_TO_IX[t] for t in tags], dtype=torch.long)
 
-                # Step 3. Run our forward pass.
+                # Step 2. Run our forward pass.
                 loss = self.__model.neg_log_likelihood(sentence_in, targets)
 
-                # Step 4. Compute the loss, gradients, and update the parameters by
+                # Step 3. Compute the loss, gradients, and update the parameters by
                 # calling optimizer.step()
                 loss.backward()
                 optimizer.step()
+
+        return self
 
     def predict(self, test_data: Iterable[List[str]]) -> List[List[str]]:
         """Predicts labels for each word in sentences.
@@ -99,16 +109,20 @@ class BilstmCodeSwitching:
         return predictions
 
     def evaluate(self, test_data_path: str) -> None:
+        """Evaluates precision and recall metrics for each class and prints them.
+
+        :param test_data_path:
+        """
 
         data: pd.DataFrame = load_data(test_data_path)
         prepared_data: List[Tuple[List, List]] = prepare_data(data)
         tokenized_texts = [text[0] for text in prepared_data]
-        true_values = [text[1] for text in prepared_data]
 
         predictions: List[List] = self.predict(tokenized_texts)
+        true_values = [text[1] for text in prepared_data]
 
-        flat_predictions = [tag for prediction in predictions for tag in prediction]
-        flat_true_values = [tag for prediction in true_values for tag in prediction]
+        flat_predictions = [tag for sequence in predictions for tag in sequence]
+        flat_true_values = [tag for sequence in true_values for tag in sequence]
 
         for lang in self.TAG_TO_IX.keys():
             bool_predictions = [1 if tag == lang else 0 for tag in flat_predictions]
@@ -201,7 +215,7 @@ def precision(true_values: Iterable, predictions: Iterable, positive_class: int)
 
     :param true_values:
     :param predictions:
-    :param positive_class: the label of class considered positive for the metric: must be 'ptpt' or 'ptbr'
+    :param positive_class: the label of class considered positive for the metric
     :return: precision score
     """
 
@@ -221,7 +235,7 @@ def recall(true_values: Iterable, predictions: Iterable, positive_class: int) ->
 
     :param true_values:
     :param predictions:
-    :param positive_class: the label of class considered positive for the metric: must be 'ptpt' or 'ptbr'
+    :param positive_class: the label of class considered positive for the metric
     :return: recall score
     """
 
