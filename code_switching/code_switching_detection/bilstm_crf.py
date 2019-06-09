@@ -2,8 +2,10 @@ from typing import Any
 from typing import List
 from typing import Tuple
 
+
 import torch
 import torch.nn as nn
+
 
 torch.manual_seed(1)
 
@@ -13,20 +15,18 @@ __all__ = [
 
 
 class BiLSTM_CRF(nn.Module):
-    """
-
-    """
 
     START_TAG = "<START>"
     STOP_TAG = "<STOP>"
     TAG_TO_IX = {"en": 0, "es": 1, "other": 2, START_TAG: 3, STOP_TAG: 4}
 
-    def __init__(self, vocab_size: int, embedding_dim: int, hidden_dim: int):
+    def __init__(self, vocab_size, tag_to_ix, embedding_dim, hidden_dim):
         super(BiLSTM_CRF, self).__init__()
         self.embedding_dim = embedding_dim
         self.hidden_dim = hidden_dim
         self.vocab_size = vocab_size
-        self.tagset_size = len(self.TAG_TO_IX)
+        self.tag_to_ix = tag_to_ix
+        self.tagset_size = len(tag_to_ix)
 
         self.word_embeds = nn.Embedding(vocab_size, embedding_dim)
         self.lstm = nn.LSTM(embedding_dim, hidden_dim // 2,
@@ -38,6 +38,11 @@ class BiLSTM_CRF(nn.Module):
         # Matrix of transition parameters.  Entry i,j is the score of
         # transitioning *to* i *from* j.
         self.transitions = nn.Parameter(torch.randn(self.tagset_size, self.tagset_size))
+
+        # These two statements enforce the constraint that we never transfer
+        # to the start tag and we never transfer from the stop tag
+        #         self.transitions.data[tag_to_ix[START_TAG], :] = -10000
+        #         self.transitions.data[:, tag_to_ix[STOP_TAG]] = -10000
 
         self.hidden = self.init_hidden()
 
@@ -158,9 +163,6 @@ class BiLSTM_CRF(nn.Module):
         best_path.reverse()
         return path_score, best_path
 
-    def save_model(self, pathname):
-        torch.save(self.state_dict(), pathname)
-
     def neg_log_likelihood(self, sentence: torch.Tensor, tags):
         """Overrides nn.Module's method. Calculates error.
 
@@ -186,19 +188,6 @@ class BiLSTM_CRF(nn.Module):
         # Find the best path, given the features.
         score, tag_seq = self._viterbi_decode(lstm_feats)
         return score, tag_seq
-
-    @classmethod
-    def load_model(cls, pathname: str, model: 'BiLSTM_CRF') -> 'BiLSTM_CRF':
-        """Loads serialized model. Model must be initialized.
-
-        :param pathname:
-        :param model: initialized model
-        :return:
-        """
-        # TODO save the parameters into separate file to avoid the need of initializing
-        model.load_state_dict(torch.load(pathname))
-        model.eval()
-        return model
 
 
 def argmax(vec: torch.Tensor) -> int:
