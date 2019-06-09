@@ -144,6 +144,9 @@ def precision(true_values: Iterable, predictions: Iterable, positive_class: str)
                          if (pred == gold and pred == positive_class)])
     positive = len([pred for pred in predictions if pred == positive_class])
 
+    if positive == 0:  # excludes division by zero
+        return 0
+
     return true_positive / positive
 
 
@@ -160,5 +163,8 @@ def recall(true_values: Iterable, predictions: Iterable, positive_class: str) ->
     true_positive = len([pred for (pred, gold) in zip(predictions, true_values)
                          if (pred == gold and pred == positive_class)])
     all_true = len([value for value in true_values if value == positive_class])
+
+    if all_true == 0:  # excludes division by zero
+        return 0
 
     return true_positive / all_true

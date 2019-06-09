@@ -1,3 +1,4 @@
+import csv
 import json
 from pathlib import Path
 from typing import Dict
@@ -21,17 +22,18 @@ class BilstmCodeSwitching:
     EMBEDDING_DIM = 5
     HIDDEN_DIM = 4
 
-    OOV_VALUE = 2
+    OOV_VALUE = 'other'
 
     START_TAG = "<START>"
     STOP_TAG = "<STOP>"
 
-    TAG_TO_IX = {"en": 0, "es": 1, "other": 2, START_TAG: 3, STOP_TAG: 4}
+    TAG_TO_IX = {"en": 0, "es": 1, "other": 2}
 
     def __init__(self):
         self.word_to_ix = {}
         self.vocab_size = 0
         self.__model = None
+        self.ix_to_tag = {y: x for x, y in self.TAG_TO_IX.items()}
 
     def fit(self, training_data: pd.DataFrame, epochs=20):
 
@@ -39,6 +41,7 @@ class BilstmCodeSwitching:
 
         self.word_to_ix = get_vocabulary(training_data)
         self.vocab_size = len(self.word_to_ix)
+
         self.__model = BiLSTM_CRF(self.vocab_size, self.TAG_TO_IX, self.EMBEDDING_DIM, self.HIDDEN_DIM)
         optimizer = optim.SGD(self.__model.parameters(), lr=0.01, weight_decay=1e-4)
 
@@ -76,16 +79,18 @@ class BilstmCodeSwitching:
                 cleaned_seq = self.__remove_oov(sentence)
                 tensor_seq = prepare_sequence(cleaned_seq, self.word_to_ix)
                 if tensor_seq.shape[0] > 0:
-                    prediction = self.__model(tensor_seq)
+                    prediction = self.__model(tensor_seq)[1]
                 else:
                     prediction = []
+
+                prediction = [self.ix_to_tag[ix] for ix in prediction]
 
                 i = 0
                 modified_prediction = []
 
                 for word in sentence:
                     if word in cleaned_seq:
-                        modified_prediction.append(prediction[1][i])
+                        modified_prediction.append(prediction[i])
                         i += 1
                     else:
                         modified_prediction.append(self.OOV_VALUE)
@@ -93,8 +98,24 @@ class BilstmCodeSwitching:
 
         return predictions
 
-    def evaluate(self, test_data: Iterable[List[str]], labels: Iterable[List]) -> None:
-        pass
+    def evaluate(self, test_data_path: str) -> None:
+
+        data: pd.DataFrame = load_data(test_data_path)
+        prepared_data: List[Tuple[List, List]] = prepare_data(data)
+        tokenized_texts = [text[0] for text in prepared_data]
+        true_values = [text[1] for text in prepared_data]
+
+        predictions: List[List] = self.predict(tokenized_texts)
+
+        flat_predictions = [tag for prediction in predictions for tag in prediction]
+        flat_true_values = [tag for prediction in true_values for tag in prediction]
+
+        for lang in self.TAG_TO_IX.keys():
+            bool_predictions = [1 if tag == lang else 0 for tag in flat_predictions]
+            bool_true_values = [1 if tag == lang else 0 for tag in flat_true_values]
+
+            print(f"Precision for {lang}: {precision(bool_true_values, bool_predictions, self.TAG_TO_IX[lang])}")
+            print(f"Recall for {lang}: {recall(bool_true_values, bool_predictions, self.TAG_TO_IX[lang])}")
 
     def save(self, pathname: str):
         """Saves model to file.
@@ -150,12 +171,12 @@ def load_data(path_to_train: str) -> pd.DataFrame:
     :param path_to_train:
     :return: DataFrame
     """
-    train_data = pd.read_csv(path_to_train, sep='\t', header=None)
+    train_data = pd.read_csv(path_to_train, sep='\t', quoting=csv.QUOTE_NONE, encoding='utf-8')
     train_data.columns = ['tweet_id', 'user_id', 'start', 'end', 'token', 'gold_label']
     return train_data
 
 
-def prepare_data(df: pd.DataFrame) -> List[Tuple[Iterable, Iterable]]:
+def prepare_data(df: pd.DataFrame) -> List[Tuple[List, List]]:
     """Returns data in proper format for training.
 
     :param df: DataFrame
@@ -173,3 +194,42 @@ def prepare_sequence(seq, to_ix: Dict):
     idxs = [to_ix[w] for w in seq]
     return torch.tensor(idxs, dtype=torch.long)
 
+
+def precision(true_values: Iterable, predictions: Iterable, positive_class: int) -> float:
+    """Calculates precision metric for positive_class. Comparing to sklearn precision_score
+    this function set values to False if they match neither positive nor negative class.
+
+    :param true_values:
+    :param predictions:
+    :param positive_class: the label of class considered positive for the metric: must be 'ptpt' or 'ptbr'
+    :return: precision score
+    """
+
+    true_positive = len([pred for (pred, gold) in zip(predictions, true_values)
+                         if (pred == gold and pred == positive_class)])
+    positive = len([pred for pred in predictions if pred == positive_class])
+
+    if positive == 0:  # excludes division by zero
+        return 0
+
+    return true_positive / positive
+
+
+def recall(true_values: Iterable, predictions: Iterable, positive_class: int) -> float:
+    """Calculates recall metric for positive_class. Comparing to sklearn precision_score
+    this function set values to False if they match neither positive nor negative class.
+
+    :param true_values:
+    :param predictions:
+    :param positive_class: the label of class considered positive for the metric: must be 'ptpt' or 'ptbr'
+    :return: recall score
+    """
+
+    true_positive = len([pred for (pred, gold) in zip(predictions, true_values)
+                         if (pred == gold and pred == positive_class)])
+    all_true = len([value for value in true_values if value == positive_class])
+
+    if all_true == 0:  # excludes division by zero
+        return 0
+
+    return true_positive / all_true
