@@ -3,6 +3,7 @@ from pathlib import Path
 import pickle
 from typing import Iterable
 from typing import List
+from typing import Optional
 from typing import Union
 
 from pyfasttext import FastText
@@ -20,23 +21,31 @@ class FasttextLangId:
     """
 
     __DIRNAME = Path(os.path.dirname(__file__))
-    __OUTPUT_TRAINED_MODEL = __DIRNAME / 'models/dialect_clf_model'
+    __OUTPUT_TRAINED_MODEL = __DIRNAME / 'models/langid_variants'
     __NO_PREDICTION_VALUE = 'None'
-    __CLASSES = ['ptpt', 'ptbr']
+    __CLASSES = ['pt-pt', 'pt-br']
+    __DIALECT_MAP = {'ptpt': 'pt-pt', 'ptbr': 'pt-br'}
 
-    def __init__(self, path_to_model: str):
-        self.__model = FastText(path_to_model)
+    def __init__(self, path_to_model: Optional[str] = None):
+
+        if path_to_model is None:
+            self.__model = FastText()
+        else:
+            self.__model = FastText(path_to_model)
+
         self.classes = self.__model.labels
 
-    def fit(self, filename: str, epoch: int = 100) -> 'FasttextLangId':
+    def fit(self, filename: str, output_filename: str, epoch: int = 100, lr=0.7) -> 'FasttextLangId':
         """Trains model given filename - path to train data file.
 
         :param filename: path to train data file
+        :param output_filename:
         :param epoch: number of train iterations
+        :param lr:
         :return: trained model
         """
 
-        self.__model.supervised(input=filename, output=self.__OUTPUT_TRAINED_MODEL, epoch=epoch, lr=0.7)
+        self.__model.supervised(input=filename, output=output_filename, epoch=epoch, lr=0.7)
         self.classes = self.__model.labels
         return self
 
@@ -48,7 +57,13 @@ class FasttextLangId:
         """
 
         predictions = self.__model.predict(texts)
-        return [pred[0] if pred else self.__NO_PREDICTION_VALUE for pred in predictions]
+        predictions = [pred[0] if pred else self.__NO_PREDICTION_VALUE for pred in predictions]
+
+        return [
+            self.__DIALECT_MAP[label]
+            if label in self.__DIALECT_MAP else label
+            for label in predictions
+        ]
 
     def predict_file(self, filename: str) -> List[str]:
         """Assigns a class value for each text in texts from file.
@@ -58,15 +73,35 @@ class FasttextLangId:
         """
 
         predictions = self.__model.predict_file(filename)
-        return [pred[0] if pred else self.__NO_PREDICTION_VALUE for pred in predictions]
+        predictions = [pred[0] if pred else self.__NO_PREDICTION_VALUE for pred in predictions]
 
-    def evaluate(self, texts: Union[Iterable[str], str], gold_labels: Iterable[str],
+        return [
+            self.__DIALECT_MAP[label]
+            if label in self.__DIALECT_MAP else label
+            for label in predictions
+        ]
+
+    def evaluate(
+            self,
+            texts: Union[Iterable[str], str],
+            gold_labels: Iterable[str],
+            classes: Optional[List[str]] = None
     ) -> None:
         """Evaluates precision and recall metrics for each class and prints them.
 
         :param texts: iterable of texts or file with test set of texts
         :param gold_labels: ground truth
+        :param classes: classes of model to evaluate
         """
+
+        if classes is not None:
+            self.classes = classes
+
+        gold_labels = [
+            self.__DIALECT_MAP[label]
+            if label in self.__DIALECT_MAP else label
+            for label in gold_labels
+        ]
 
         if isinstance(texts, Iterable):
             predictions = self.predict(texts)
@@ -75,7 +110,7 @@ class FasttextLangId:
 
         for class_label in self.classes:
             print(f"Precision for class {class_label}: {precision(gold_labels, predictions, class_label)}")
-            print(f"Recall for class {class_label}: {recall(gold_labels, predictions, class_label)}")
+            print(f"Recall for class {class_label}: {recall(gold_labels, predictions, class_label)}\n")
 
     def save(self, filename: str) -> None:
         """Saves model to file.
