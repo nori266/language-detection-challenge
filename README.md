@@ -9,17 +9,28 @@ Before running the scripts and notebooks, install the requirements.txt.
 The demo scripts `task1.py`, `task2.py`, and `task3.py` solve the corresponding tasks.
 How to run:
 
-`python task1.py input_file output_file`
+```
+python task1.py input_file output_file
 
-`python task2.py input_file output_file`
+python task2.py input_file output_file
+```
 
-*input_file* should be a text file with one document for a line.
+`input_file` should be a text file with one document for a line.
 
-*output_file* will contain labels, one label for a line.
+`output_file` will contain labels, one label for a line.
 
-`python task3.py input_file.tsv output_file`
+```
+python task3.py input_file.tsv output_file
+```
 
-*input_file.tsv* should be a .tsv or .csv file in the same format as *train_data.tsv* and *dev_data.tsv* in `code_switching/data`.
+`input_file.tsv` should be a .tsv or .csv file in the same format as `train_data.tsv` and `dev_data.tsv` in `code_switching/data`.
+
+`output_file` will contain labels; in one line there will be the labels for one document, separated by commas.
+
+#### Demo notebooks
+
+`demo_notebooks` folder contains notebooks corresponding to the tasks. They demonstrate how to use the models and how to evaluate their quality.
+
 
 ## Tasks
 
@@ -33,9 +44,6 @@ To simplify we are going to focus on English and Spanish, so you only need to re
 
 *See more information about tasks 1 and 2 in langid folder, and about task3 in code_switching folder*
 
-## Evaluation
-
-We will evaluate the system on our own test sets, by querying your system for each test case. We will use different datasets for each task.
 
 ## Guidelines
 * ***Fork this _git repo_*** and add relevant files and explanations for what you feel necessary (starting with a clear description of what is implemented in the README)
