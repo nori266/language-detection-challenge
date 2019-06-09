@@ -14,8 +14,10 @@ I have never dealt with this task before, and it is hard to say what would be a 
 `language_identification` - source code of language identification using FastText model
 
 `models` folder contains:
-    - `lid.176.ftz` pretrained model
-    - `langid_variants.bin` trained on training data 
+
+    `lid.176.ftz` pretrained model
+    
+    `langid_variants.bin` trained on training data 
 
 ---------------------------------
 
